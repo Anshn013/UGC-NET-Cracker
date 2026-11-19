@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
 import { TopBar } from './components/TopBar';
+import { WelcomeScreen } from './components/WelcomeScreen';
 import { OverviewDashboard } from './components/OverviewDashboard';
 import { MockArena } from './components/MockArena';
 import { ModelLab } from './components/ModelLab';
 import { SyllabusVault } from './components/SyllabusVault';
+import { QUESTION_BANK } from './data/questionBank';
+import { PAPER1_QUESTION_BANK } from './data/paper1QuestionBank';
 import {
   AppView,
   MasteryStatus,
@@ -12,6 +15,7 @@ import {
 } from './types/economics';
 
 const STORAGE_KEY = 'arthajrf_ugc_net_econ_v1';
+const ENTERED_SESSION_KEY = 'arthajrf_welcome_dismissed_v1';
 
 const DEFAULT_STATE: StudyState = {
   topicMastery: {},
@@ -38,6 +42,13 @@ function loadInitialState(): StudyState {
 }
 
 export default function App() {
+  const [hasEntered, setHasEntered] = useState<boolean>(() => {
+    try {
+      return window.sessionStorage.getItem(ENTERED_SESSION_KEY) === 'true';
+    } catch {
+      return false;
+    }
+  });
   const [activeView, setActiveView] = useState<AppView>('overview');
   const [mockInitialUnit, setMockInitialUnit] = useState<number | 'all'>('all');
   const [syllabusInitialUnit, setSyllabusInitialUnit] = useState<number>(1);
@@ -50,6 +61,24 @@ export default function App() {
       // Ignore storage quota errors cleanly
     }
   }, [studyState]);
+
+  const handleBegin = () => {
+    setHasEntered(true);
+    try {
+      window.sessionStorage.setItem(ENTERED_SESSION_KEY, 'true');
+    } catch {
+      // Ignore storage errors cleanly
+    }
+  };
+
+  const handleOpenWelcome = () => {
+    setHasEntered(false);
+    try {
+      window.sessionStorage.removeItem(ENTERED_SESSION_KEY);
+    } catch {
+      // Ignore storage errors cleanly
+    }
+  };
 
   const handleUpdateTargets = (paper1Target: number, paper2Target: number) => {
     setStudyState((prev) => ({ ...prev, paper1Target, paper2Target }));
@@ -121,6 +150,16 @@ export default function App() {
     setActiveView('mock');
   };
 
+  if (!hasEntered) {
+    return (
+      <WelcomeScreen
+        onStart={handleBegin}
+        paper1Count={PAPER1_QUESTION_BANK.length}
+        paper2Count={QUESTION_BANK.length}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900">
       <TopBar
@@ -165,8 +204,16 @@ export default function App() {
 
       <footer className="border-t border-slate-200 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
-          <span>ArthaJRF · UGC NET Economics (Subject Code 01) Study Workbench</span>
-          <span>Progress saved locally in your browser</span>
+          <span>
+            ArthaJRF · Created by <strong className="text-slate-700">Anshin Shan K</strong> · UGC NET Paper 1 & Economics
+          </span>
+          <button
+            type="button"
+            onClick={handleOpenWelcome}
+            className="text-blue-700 hover:underline font-medium cursor-pointer"
+          >
+            Welcome & Creator Card
+          </button>
         </div>
       </footer>
     </div>
