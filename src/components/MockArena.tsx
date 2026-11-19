@@ -10,6 +10,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import { QUESTION_BANK } from '../data/questionBank';
+import { PAPER1_QUESTION_BANK } from '../data/paper1QuestionBank';
 import { SYLLABUS_UNITS } from '../data/syllabusData';
 import { MockResult, Question, QuestionFormat } from '../types/economics';
 
@@ -22,6 +23,20 @@ interface MockArenaProps {
 
 type ArenaStage = 'setup' | 'active' | 'results';
 type TestMode = 'exam' | 'practice';
+type PaperSelection = 'paper2' | 'paper1';
+
+const PAPER1_UNIT_LABELS: Record<number, string> = {
+  1: 'Teaching Aptitude',
+  2: 'Research Aptitude',
+  3: 'Comprehension',
+  4: 'Communication',
+  5: 'Mathematical Reasoning and Aptitude',
+  6: 'Logical Reasoning',
+  7: 'Data Interpretation',
+  8: 'Information and Communication Technology (ICT)',
+  9: 'People, Development and Environment',
+  10: 'Higher Education System',
+};
 
 const FORMAT_FILTERS: (QuestionFormat | 'all' | 'bookmarked')[] = [
   'all',
@@ -40,6 +55,7 @@ export const MockArena: React.FC<MockArenaProps> = ({
   onToggleBookmark,
   onSaveResult,
 }) => {
+  const [paper, setPaper] = useState<PaperSelection>('paper2');
   const [stage, setStage] = useState<ArenaStage>('setup');
   const [unitFilter, setUnitFilter] = useState<number | 'all'>(initialUnitFilter);
   const [formatFilter, setFormatFilter] = useState<
@@ -63,8 +79,17 @@ export const MockArena: React.FC<MockArenaProps> = ({
     setUnitFilter(initialUnitFilter);
   }, [initialUnitFilter]);
 
+  const activeBank = paper === 'paper1' ? PAPER1_QUESTION_BANK : QUESTION_BANK;
+
+  const getUnitName = (unitNum: number) => {
+    if (paper === 'paper1') {
+      return PAPER1_UNIT_LABELS[unitNum] ?? `Paper 1 Unit ${unitNum}`;
+    }
+    return SYLLABUS_UNITS.find((u) => u.unitNumber === unitNum)?.title ?? `Unit ${unitNum}`;
+  };
+
   const filteredPool = useMemo(() => {
-    return QUESTION_BANK.filter((q) => {
+    return activeBank.filter((q) => {
       if (unitFilter !== 'all' && q.unitNumber !== unitFilter) return false;
       if (formatFilter === 'bookmarked') {
         return bookmarkedQuestions.includes(q.id);
@@ -72,7 +97,7 @@ export const MockArena: React.FC<MockArenaProps> = ({
       if (formatFilter !== 'all' && q.format !== formatFilter) return false;
       return true;
     });
-  }, [unitFilter, formatFilter, bookmarkedQuestions]);
+  }, [activeBank, unitFilter, formatFilter, bookmarkedQuestions]);
 
   // Timer tick when active
   useEffect(() => {
@@ -94,7 +119,13 @@ export const MockArena: React.FC<MockArenaProps> = ({
 
   // Auto-submit if exam timer hits 0
   useEffect(() => {
-    if (stage === 'active' && mode === 'exam' && secondsLeft === 0 && sessionQuestions.length > 0 && elapsedSeconds > 1) {
+    if (
+      stage === 'active' &&
+      mode === 'exam' &&
+      secondsLeft === 0 &&
+      sessionQuestions.length > 0 &&
+      elapsedSeconds > 1
+    ) {
       handleSubmitTest();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -106,7 +137,6 @@ export const MockArena: React.FC<MockArenaProps> = ({
       questionCountLimit === 0
         ? filteredPool.length
         : Math.min(questionCountLimit, filteredPool.length);
-    // Deterministic shuffle for variety without external deps
     const poolCopy = [...filteredPool].sort(() => Math.random() - 0.5);
     const chosen = poolCopy.slice(0, limit);
 
@@ -117,7 +147,7 @@ export const MockArena: React.FC<MockArenaProps> = ({
     setMarkedForReview({});
     setVisited({ [chosen[0].id]: true });
     setElapsedSeconds(0);
-    setSecondsLeft(chosen.length * 72); // ~1.2 min per question (NTA Paper 2 pace)
+    setSecondsLeft(chosen.length * 72);
     setLastResult(null);
     setStage('active');
   };
@@ -198,17 +228,60 @@ export const MockArena: React.FC<MockArenaProps> = ({
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         <div className="space-y-2">
           <p className="text-xs font-medium text-slate-500">
-            Paper 2 · Economics (Code 01) · NTA CBT Pattern
+            {paper === 'paper1'
+              ? 'Paper 1 · General Paper on Teaching & Research Aptitude · NTA CBT Pattern'
+              : 'Paper 2 · Economics (Code 01) · NTA CBT Pattern'}
           </p>
           <h1 className="font-display text-3xl font-semibold text-slate-900">
             Mock Test & PYQ Practice Arena
           </h1>
           <p className="text-sm text-slate-600 max-w-2xl">
-            Configure a timed NTA-style CBT exam or an instant-explanation practice drill filtered by Economics unit and question archetype.
+            Switch between UGC NET Paper 1 and Paper 2 Economics, filter by unit and question archetype, and practice with instant explanations.
           </p>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-xl p-6 sm:p-8 space-y-7">
+          {/* Paper Switcher */}
+          <div className="space-y-3">
+            <h2 className="text-sm font-semibold text-slate-900">0. Select Exam Paper</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setPaper('paper2');
+                  setUnitFilter('all');
+                }}
+                className={`text-left p-4 rounded-xl border transition-colors cursor-pointer ${
+                  paper === 'paper2'
+                    ? 'border-blue-700 bg-blue-50/50'
+                    : 'border-slate-200 hover:border-slate-300 bg-white'
+                }`}
+              >
+                <p className="font-medium text-slate-900">Paper 2: Economics (Code 01)</p>
+                <p className="text-xs text-slate-600 mt-1">
+                  Micro, Macro, Econometrics, Mathematical Econ, International, Public, Money & Banking, Growth, Environment & Indian Economy.
+                </p>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setPaper('paper1');
+                  setUnitFilter('all');
+                }}
+                className={`text-left p-4 rounded-xl border transition-colors cursor-pointer ${
+                  paper === 'paper1'
+                    ? 'border-blue-700 bg-blue-50/50'
+                    : 'border-slate-200 hover:border-slate-300 bg-white'
+                }`}
+              >
+                <p className="font-medium text-slate-900">Paper 1: General Aptitude</p>
+                <p className="text-xs text-slate-600 mt-1">
+                  Teaching, Research, Comprehension, Communication, Math & Logical Reasoning, DI, ICT, Environment & Higher Education.
+                </p>
+              </button>
+            </div>
+          </div>
+
           {/* Mode Selection */}
           <div className="space-y-3">
             <h2 className="text-sm font-semibold text-slate-900">1. Select Session Mode</h2>
@@ -224,7 +297,7 @@ export const MockArena: React.FC<MockArenaProps> = ({
               >
                 <p className="font-medium text-slate-900">Practice & Explain Mode</p>
                 <p className="text-xs text-slate-600 mt-1">
-                  Check each answer immediately with detailed derivations, econometric notes, and exam traps.
+                  Check each answer immediately with detailed explanations and exam tips.
                 </p>
               </button>
               <button
@@ -238,7 +311,7 @@ export const MockArena: React.FC<MockArenaProps> = ({
               >
                 <p className="font-medium text-slate-900">Timed NTA Exam Simulation</p>
                 <p className="text-xs text-slate-600 mt-1">
-                  Countdown timer (72s/question pace), NTA question palette, and post-submission unit score breakdown.
+                  Countdown timer, NTA question palette, and post-submission unit score breakdown.
                 </p>
               </button>
             </div>
@@ -258,9 +331,9 @@ export const MockArena: React.FC<MockArenaProps> = ({
               className="w-full sm:w-96 px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-lg text-slate-900"
             >
               <option value="all">All 10 Units (Comprehensive Mix)</option>
-              {SYLLABUS_UNITS.map((u) => (
-                <option key={u.unitNumber} value={u.unitNumber}>
-                  Unit {u.unitNumber}: {u.title}
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((uNum) => (
+                <option key={uNum} value={uNum}>
+                  Unit {uNum}: {getUnitName(uNum)}
                 </option>
               ))}
             </select>
@@ -323,7 +396,7 @@ export const MockArena: React.FC<MockArenaProps> = ({
           {/* Launch Bar */}
           <div className="pt-5 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <p className="text-sm text-slate-600 font-mono tabular-nums">
-              {filteredPool.length} matching questions available in bank
+              {filteredPool.length} matching questions available in {paper === 'paper1' ? 'Paper 1' : 'Paper 2'} bank
             </p>
             <button
               type="button"
@@ -351,7 +424,8 @@ export const MockArena: React.FC<MockArenaProps> = ({
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <p className="text-xs font-medium text-slate-500">
-              Session Complete · {lastResult.mode === 'exam' ? 'Timed NTA Exam' : 'Practice Mode'}
+              {paper === 'paper1' ? 'Paper 1 · General Aptitude' : 'Paper 2 · Economics'} · Session Complete ·{' '}
+              {lastResult.mode === 'exam' ? 'Timed NTA Exam' : 'Practice Mode'}
             </p>
             <h1 className="font-display text-3xl font-semibold text-slate-900 mt-1">
               Performance Diagnostic
@@ -415,7 +489,6 @@ export const MockArena: React.FC<MockArenaProps> = ({
           <div className="divide-y divide-slate-200">
             {Object.entries(lastResult.unitBreakdown).map(([unitNumStr, stats]) => {
               const unitNum = Number(unitNumStr);
-              const unitObj = SYLLABUS_UNITS.find((u) => u.unitNumber === unitNum);
               const pct = Math.round((stats.correct / stats.total) * 100);
               return (
                 <div
@@ -423,7 +496,7 @@ export const MockArena: React.FC<MockArenaProps> = ({
                   className="px-6 py-3.5 flex items-center justify-between gap-4 text-sm"
                 >
                   <span className="font-medium text-slate-900">
-                    Unit {unitNum}. {unitObj?.title}
+                    Unit {unitNum}. {getUnitName(unitNum)}
                   </span>
                   <span className="font-mono text-xs tabular-nums text-slate-700">
                     {stats.correct} / {stats.total} correct ({pct}%)
@@ -548,7 +621,7 @@ export const MockArena: React.FC<MockArenaProps> = ({
           </span>
           <span className="text-slate-400 mx-2">·</span>
           <span className="text-slate-600">
-            Unit {currentQ.unitNumber}: {currentQ.unitTitle}
+            {paper === 'paper1' ? 'Paper 1' : 'Paper 2'} · Unit {currentQ.unitNumber}: {currentQ.unitTitle}
           </span>
           <span className="text-slate-400 mx-2">·</span>
           <span className="text-slate-600">{currentQ.format}</span>
