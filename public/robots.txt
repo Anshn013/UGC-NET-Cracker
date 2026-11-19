@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://ugc-net-cracker-nine.vercel.app/sitemap.xml
