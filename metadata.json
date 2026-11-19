@@ -1,0 +1,6 @@
+{
+  "name": "ArthaJRF — UGC NET Economics",
+  "description": "Comprehensive UGC NET JRF Economics (Code 01) preparation workbench featuring a 10-unit syllabus tracker, NTA-pattern mock tests, interactive economic model simulations, and a high-yield revision vault.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
