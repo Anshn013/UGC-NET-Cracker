@@ -125,7 +125,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
               <p className="text-xs sm:text-sm text-[#3C4043] flex items-center gap-2">
                 <GraduationCap className="w-4 h-4 text-[#1A73E8] shrink-0" />
                 <span>
-                  UGC NET Qualified (Economics) · MA Economics, Farook College, Calicut
+                  UGC NET Qualified (Economics)
                 </span>
               </p>
               <div className="pt-1 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-[#5F6368]">
