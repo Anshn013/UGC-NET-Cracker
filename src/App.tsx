@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import { TopBar } from './components/TopBar';
 import { WelcomeScreen } from './components/WelcomeScreen';
 import { OverviewDashboard } from './components/OverviewDashboard';
@@ -152,11 +153,14 @@ export default function App() {
 
   if (!hasEntered) {
     return (
-      <WelcomeScreen
-        onStart={handleBegin}
-        paper1Count={PAPER1_QUESTION_BANK.length}
-        paper2Count={QUESTION_BANK.length}
-      />
+      <>
+        <WelcomeScreen
+          onStart={handleBegin}
+          paper1Count={PAPER1_QUESTION_BANK.length}
+          paper2Count={QUESTION_BANK.length}
+        />
+        <Analytics />
+      </>
     );
   }
 
@@ -216,6 +220,8 @@ export default function App() {
           </button>
         </div>
       </footer>
+
+      <Analytics />
     </div>
   );
 }
